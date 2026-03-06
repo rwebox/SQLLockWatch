@@ -15,7 +15,7 @@ GO
 PRINT '======================================================';
 PRINT ' SQLLockWatch — Deadlock Monitor Deployment';
 PRINT '======================================================';
-PRINT '';
+PRINT ''; 
 
 -- ============================================================
 -- PART A: Extended Events Session
@@ -71,7 +71,7 @@ PRINT '  XE session created.';
 -- Start the session immediately
 ALTER EVENT SESSION [SQLLockWatch_Deadlocks] ON SERVER STATE = START;
 PRINT '  XE session started.';
-PRINT '';
+PRINT ''; 
 
 GO
 
@@ -179,6 +179,44 @@ BEGIN
             )
             BEGIN
                 -- ------------------------------------------------
+                -- Extract the inner <deadlock> node from the XE
+                -- event XML.  The xml_deadlock_report event wraps
+                -- the deadlock graph inside:
+                --   <event ...>
+                --     <data name="xml_report">
+                --       <value><deadlock>...</deadlock></value>
+                --     </data>
+                --   </event>
+                -- We extract the <deadlock> node so all XPath
+                -- below can use /deadlock/... directly.
+                -- ------------------------------------------------
+                DECLARE @InnerDeadlock XML;
+
+                SET @InnerDeadlock = @DeadlockXML.query(
+                    '(/event/data[@name="xml_report"]/value/deadlock)[1]'
+                );
+
+                -- Fallback: if the XML was already a bare <deadlock> node
+                -- (e.g. from older trace-flag capture or TextData wrapper)
+                IF @InnerDeadlock IS NULL
+                    OR CAST(@InnerDeadlock AS NVARCHAR(MAX)) = N''
+                BEGIN
+                    -- Try /TextData/deadlock (legacy)
+                    SET @InnerDeadlock = @DeadlockXML.query(
+                        '(/TextData/deadlock)[1]'
+                    );
+                END
+
+                IF @InnerDeadlock IS NULL
+                    OR CAST(@InnerDeadlock AS NVARCHAR(MAX)) = N''
+                BEGIN
+                    -- Last resort: the XML IS the <deadlock> node
+                    SET @InnerDeadlock = @DeadlockXML.query(
+                        '(/deadlock)[1]'
+                    );
+                END
+
+                -- ------------------------------------------------
                 -- Parse processes from the deadlock XML
                 -- ------------------------------------------------
                 DECLARE @ProcessInfo TABLE
@@ -196,7 +234,7 @@ BEGIN
 
                 INSERT INTO @VictimList (VictimID)
                 SELECT v.value('@id', 'NVARCHAR(20)')
-                FROM   @DeadlockXML.nodes('/TextData/deadlock/victim-list/victimProcess') AS t(v);
+                FROM   @InnerDeadlock.nodes('/deadlock/victim-list/victimProcess') AS t(v);
 
                 -- All processes
                 INSERT INTO @ProcessInfo (SPID, LoginName, HostName, DBName, InputBuf, IsVictim)
@@ -210,7 +248,7 @@ BEGIN
                         WHEN vl.VictimID IS NOT NULL THEN 1
                         ELSE 0
                     END                                       AS IsVictim
-                FROM  @DeadlockXML.nodes('/TextData/deadlock/process-list/process') AS t(p)
+                FROM  @InnerDeadlock.nodes('/deadlock/process-list/process') AS t(p)
                 LEFT JOIN @VictimList vl
                        ON vl.VictimID = p.value('@id', 'NVARCHAR(20)');
 
@@ -262,8 +300,8 @@ BEGIN
             <td style="padding:8px 10px;border:1px solid #eee;">' + ISNULL(DBName,    N'') + N'</td>
             <td style="padding:8px 10px;border:1px solid #eee;font-family:Consolas,monospace;font-size:12px;max-width:300px;word-break:break-all;">'
                 + ISNULL(LEFT(InputBuf, 500), N'') + N'</td>
-            <td style="padding:8px 10px;border:1px solid #eee;font-weight:bold;color:'
-                + CASE WHEN IsVictim = 1 THEN N'#c0392b' ELSE N'#27ae60' END + N';">'
+            <td style="padding:8px 10px;border:1px solid #eee;font-weight:bold;color='
+                + CASE WHEN IsVictim = 1 THEN N'#c0392b' ELSE N'#27ae60' END + N';">
                 + CASE WHEN IsVictim = 1 THEN N'Yes' ELSE N'No' END + N'</td>
           </tr>'
                 FROM @ProcessInfo;
@@ -370,7 +408,7 @@ END
 GO
 
 PRINT '  Stored procedure created.';
-PRINT '';
+PRINT ''; 
 
 -- ============================================================
 -- PART C: SQL Server Agent Job
