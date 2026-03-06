@@ -75,7 +75,7 @@ BEGIN
 
         -- Log the error in the alert log if possible
         INSERT INTO msdb.dbo.SQLLockWatch_AlertLog (AlertType, Details, EmailSent)
-        VALUES ('DEADLOCK', N'ERROR in SQLLockWatch_PurgeHistory (line '
+        VALUES ('CLEANUP', N'ERROR in SQLLockWatch_PurgeHistory (line '
                 + CAST(@ErrLine AS NVARCHAR(10)) + N'): ' + @ErrMsg, 0);
     END CATCH
 END
