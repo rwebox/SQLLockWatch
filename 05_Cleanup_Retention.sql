@@ -22,7 +22,7 @@ PRINT '';
 PRINT 'Creating stored procedure SQLLockWatch_PurgeHistory...';
 GO
 
-CREATE OR ALTER PROCEDURE msdb.dbo.SQLLockWatch_PurgeHistory
+CREATE OR ALTER PROCEDURE dbo.SQLLockWatch_PurgeHistory
 AS
 BEGIN
     SET NOCOUNT ON;
