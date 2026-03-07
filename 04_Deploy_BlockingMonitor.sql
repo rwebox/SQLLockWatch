@@ -22,7 +22,7 @@ PRINT '';
 PRINT 'Part A: Creating stored procedure SQLLockWatch_CheckBlocking...';
 GO
 
-CREATE OR ALTER PROCEDURE msdb.dbo.SQLLockWatch_CheckBlocking
+CREATE OR ALTER PROCEDURE dbo.SQLLockWatch_CheckBlocking
 AS
 BEGIN
     SET NOCOUNT ON;
