@@ -81,7 +81,7 @@ GO
 PRINT 'Part B: Creating stored procedure SQLLockWatch_CheckDeadlocks...';
 GO
 
-CREATE OR ALTER PROCEDURE msdb.dbo.SQLLockWatch_CheckDeadlocks
+CREATE OR ALTER PROCEDURE dbo.SQLLockWatch_CheckDeadlocks
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -142,7 +142,8 @@ BEGIN
         INSERT INTO @DeadlockEvents (DeadlockXML, EventTime)
         SELECT
             TRY_CAST(xdr.event_data AS XML)                            AS DeadlockXML,
-            CAST(xdr.timestamp_utc AS DATETIME)                        AS EventTime
+           -- CAST(xdr.timestamp_utc AS DATETIME)                        AS EventTime
+			CAST(TRY_CAST(xdr.event_data AS XML).value('(event/@timestamp)[1]', 'DATETIME2') AS DATETIME) AS EventTime
         FROM sys.fn_xe_file_target_read_file(@TargetPath, NULL, NULL, NULL) AS xdr
         WHERE xdr.object_name = N'xml_deadlock_report';
 
@@ -300,8 +301,8 @@ BEGIN
             <td style="padding:8px 10px;border:1px solid #eee;">' + ISNULL(DBName,    N'') + N'</td>
             <td style="padding:8px 10px;border:1px solid #eee;font-family:Consolas,monospace;font-size:12px;max-width:300px;word-break:break-all;">'
                 + ISNULL(LEFT(InputBuf, 500), N'') + N'</td>
-            <td style="padding:8px 10px;border:1px solid #eee;font-weight:bold;color='
-                + CASE WHEN IsVictim = 1 THEN N'#c0392b' ELSE N'#27ae60' END + N';">
+            <td style="padding:8px 10px;border:1px solid #eee;font-weight:bold;color:'
+                + CASE WHEN IsVictim = 1 THEN N'#c0392b' ELSE N'#27ae60' END + N';">'
                 + CASE WHEN IsVictim = 1 THEN N'Yes' ELSE N'No' END + N'</td>
           </tr>'
                 FROM @ProcessInfo;
@@ -408,7 +409,7 @@ END
 GO
 
 PRINT '  Stored procedure created.';
-PRINT ''; 
+PRINT '';
 
 -- ============================================================
 -- PART C: SQL Server Agent Job
