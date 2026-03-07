@@ -84,7 +84,7 @@ PRINT 'Step 3: Removing stored procedures...';
 
 IF OBJECT_ID(N'msdb.dbo.SQLLockWatch_CheckDeadlocks', N'P') IS NOT NULL
 BEGIN
-    DROP PROCEDURE msdb.dbo.SQLLockWatch_CheckDeadlocks;
+    DROP PROCEDURE dbo.SQLLockWatch_CheckDeadlocks;
     PRINT '  Dropped procedure: msdb.dbo.SQLLockWatch_CheckDeadlocks';
 END
 ELSE
@@ -92,7 +92,7 @@ ELSE
 
 IF OBJECT_ID(N'msdb.dbo.SQLLockWatch_CheckBlocking', N'P') IS NOT NULL
 BEGIN
-    DROP PROCEDURE msdb.dbo.SQLLockWatch_CheckBlocking;
+    DROP PROCEDURE dbo.SQLLockWatch_CheckBlocking;
     PRINT '  Dropped procedure: msdb.dbo.SQLLockWatch_CheckBlocking';
 END
 ELSE
@@ -100,7 +100,7 @@ ELSE
 
 IF OBJECT_ID(N'msdb.dbo.SQLLockWatch_PurgeHistory', N'P') IS NOT NULL
 BEGIN
-    DROP PROCEDURE msdb.dbo.SQLLockWatch_PurgeHistory;
+    DROP PROCEDURE dbo.SQLLockWatch_PurgeHistory;
     PRINT '  Dropped procedure: msdb.dbo.SQLLockWatch_PurgeHistory';
 END
 ELSE
