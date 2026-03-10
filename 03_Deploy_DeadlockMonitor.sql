@@ -171,12 +171,14 @@ BEGIN
             SET @CooldownKey = CONVERT(VARCHAR(30), @EventTime, 121);
 
             -- Check cooldown
+            -- Deadlock cooldown is PERMANENT per event (unlike blocking which is time-based).
+            -- XE files persist old events on disk; without permanent suppression the same
+            -- deadlock would be re-alerted every time the time-based cooldown expires.
             IF NOT EXISTS (
                 SELECT 1
                 FROM   msdb.dbo.SQLLockWatch_Cooldown
                 WHERE  AlertType    = 'DEADLOCK'
                   AND  CooldownKey  = @CooldownKey
-                  AND  LastAlertTime >= DATEADD(MINUTE, -@CooldownMinutes, GETDATE())
             )
             BEGIN
                 -- ------------------------------------------------
